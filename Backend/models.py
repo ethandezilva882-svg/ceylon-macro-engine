@@ -32,12 +32,18 @@ class InflationData(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-class LkrUsd(Base):
-    __tablename__ = "lkr_usd"
+class ExchangeRate(Base):
+    __tablename__ = "exchange_rates"
+    __table_args__ = (
+        UniqueConstraint("date", "currency", name="uq_exchange_date_currency"),
+        Index("idx_exchange_rates_currency", "currency"),
+        Index("idx_exchange_rates_date", "date"),
+    )
 
     id         = Column(Integer, primary_key=True)
-    date       = Column(Date, nullable=False, unique=True)
-    rate       = Column(Numeric(10, 4), nullable=False)
+    date       = Column(Date, nullable=False)
+    currency   = Column(String(10), nullable=False)
+    rate       = Column(Numeric(12, 4), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

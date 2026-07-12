@@ -10,6 +10,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from Backend.database import SessionLocal
 from Backend.models import ExchangeRate
+from Scrapers.validation import (
+    validate_date, validate_numeric_range, validate_not_empty_string,
+    ValidationError, EXCHANGE_RATE_RANGE, log_skip
+)
 
 EXCHANGE_PAGE_URL = "https://www.cbsl.gov.lk/en/rates-and-indicators/exchange-rates"
 
@@ -70,7 +74,6 @@ def parse_rates():
     current_year = None
 
     for _, row in df.iloc[8:].iterrows():
-        # Year is in col 1, carries forward
         year_val = row[1]
         if pd.notna(year_val):
             try:
@@ -78,7 +81,6 @@ def parse_rates():
             except (ValueError, TypeError):
                 pass
 
-        # Month is in col 2
         month_val = str(row[2]).strip() if pd.notna(row[2]) else ""
         if month_val not in MONTH_MAP or current_year is None:
             continue
@@ -111,27 +113,39 @@ def seed_exchange_rates():
 
     db = SessionLocal()
     inserted = 0
-    skipped = 0
+    skipped_existing = 0
+    skipped_invalid = 0
 
     try:
         for rec in records:
+            label = f"date={rec['date']} currency={rec['currency']}"
+
+            try:
+                clean_date = validate_date(rec["date"], "date")
+                clean_currency = validate_not_empty_string(rec["currency"], "currency")
+                clean_rate = validate_numeric_range(rec["rate"], *EXCHANGE_RATE_RANGE, "rate")
+            except ValidationError as e:
+                log_skip(label, e)
+                skipped_invalid += 1
+                continue
+
             existing = db.query(ExchangeRate).filter(
-                ExchangeRate.date == rec["date"],
-                ExchangeRate.currency == rec["currency"]
+                ExchangeRate.date == clean_date,
+                ExchangeRate.currency == clean_currency
             ).first()
             if existing:
-                skipped += 1
+                skipped_existing += 1
                 continue
 
             db.add(ExchangeRate(
-                date=rec["date"],
-                currency=rec["currency"],
-                rate=rec["rate"],
+                date=clean_date,
+                currency=clean_currency,
+                rate=clean_rate,
             ))
             inserted += 1
 
         db.commit()
-        print(f"\nDone. Inserted: {inserted}, Skipped: {skipped}")
+        print(f"\nDone. Inserted: {inserted}, Skipped (already exist): {skipped_existing}, Skipped (failed validation): {skipped_invalid}")
 
     except Exception as e:
         db.rollback()

@@ -10,6 +10,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from Backend.database import SessionLocal
 from Backend.models import InflationData
+from Scrapers.validation import (
+    validate_date, validate_numeric_range, ValidationError,
+    CPI_INDEX_RANGE, CPI_YOY_RANGE, log_skip
+)
 
 PRICES_PAGE_URL = "https://www.cbsl.gov.lk/en/statistics/statistical-tables/real-sector/prices-wages-employment"
 
@@ -102,30 +106,59 @@ def seed_inflation():
 
     db = SessionLocal()
     inserted = 0
-    skipped = 0
+    skipped_existing = 0
+    skipped_invalid = 0
 
     try:
         for date in sorted(all_dates):
-            existing = db.query(InflationData).filter(InflationData.date == date).first()
-            if existing:
-                skipped += 1
+            label = f"row date={date}"
+
+            try:
+                clean_date = validate_date(date, "date")
+            except ValidationError as e:
+                log_skip(label, e)
+                skipped_invalid += 1
                 continue
 
-            ccpi = ccpi_by_date.get(date, {})
-            ncpi = ncpi_by_date.get(date, {})
+            existing = db.query(InflationData).filter(InflationData.date == clean_date).first()
+            if existing:
+                skipped_existing += 1
+                continue
+
+            ccpi_raw = ccpi_by_date.get(date, {})
+            ncpi_raw = ncpi_by_date.get(date, {})
+
+            def clean_optional(value, bounds, field_name):
+                if value is None or pd.isna(value):
+                    return None
+                try:
+                    return validate_numeric_range(value, *bounds, field_name)
+                except ValidationError as e:
+                    log_skip(f"{label} [{field_name}]", e)
+                    return None
+
+            ccpi_val = clean_optional(ccpi_raw.get("index"), CPI_INDEX_RANGE, "ccpi")
+            ncpi_val = clean_optional(ncpi_raw.get("index"), CPI_INDEX_RANGE, "ncpi")
+            ccpi_yoy_val = clean_optional(ccpi_raw.get("yoy"), CPI_YOY_RANGE, "ccpi_yoy")
+            ncpi_yoy_val = clean_optional(ncpi_raw.get("yoy"), CPI_YOY_RANGE, "ncpi_yoy")
+
+            if ccpi_val is None and ncpi_val is None:
+                log_skip(label, "both ccpi and ncpi missing/invalid, skipping record entirely")
+                skipped_invalid += 1
+                continue
 
             record = InflationData(
-                date=date,
-                ccpi=ccpi.get("index"),
-                ncpi=ncpi.get("index"),
-                ccpi_yoy=ccpi.get("yoy"),
-                ncpi_yoy=ncpi.get("yoy"),
+                date=clean_date,
+                ccpi=ccpi_val,
+                ncpi=ncpi_val,
+                ccpi_yoy=ccpi_yoy_val,
+                ncpi_yoy=ncpi_yoy_val,
             )
             db.add(record)
             inserted += 1
 
         db.commit()
-        print(f"\nDone. Inserted: {inserted}, Skipped: {skipped}")
+        print(f"\nDone. Inserted: {inserted}, Skipped (already exist): {skipped_existing}, Skipped (failed validation): {skipped_invalid}")
 
     except Exception as e:
         db.rollback()

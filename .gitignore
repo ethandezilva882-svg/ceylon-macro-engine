@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local scratch/notes files that shouldn't be committed
+PROJECT IMPORTANT.txt
+Backend/NOITES.txt
+*.local.txt

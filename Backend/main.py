@@ -1,10 +1,9 @@
 """
 Backend/main.py
 
-FastAPI application entrypoint (t2-1). Skeleton only: app instance, CORS,
-health check, and router wiring. Real endpoints (rates, inflation, exchange,
-correlation, auth, basket) get added as routers in Backend/routers/ in
-later tickets (t2-3 onward), then included below.
+FastAPI application entrypoint. App instance, CORS, health check, and
+router wiring for public endpoints (t2-3): rates, inflation, exchange,
+events, summary.
 
 Run with: uvicorn Backend.main:app --reload (from project root, venv active)
 """
@@ -17,6 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from Backend.database import get_db
+from Backend.routers import rates, inflation, exchange, events, summary
 
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 
@@ -44,6 +44,8 @@ def health_check(db: Session = Depends(get_db)):
     return {"status": "ok", "database": "connected"}
 
 
-# Routers get included here as they're built:
-# from Backend.routers import rates
-# app.include_router(rates.router, prefix="/api")
+app.include_router(rates.router, prefix="/api")
+app.include_router(inflation.router, prefix="/api")
+app.include_router(exchange.router, prefix="/api")
+app.include_router(events.router, prefix="/api")
+app.include_router(summary.router, prefix="/api")

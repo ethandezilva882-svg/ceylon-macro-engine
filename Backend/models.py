@@ -1,7 +1,7 @@
 from sqlalchemy import (
     Column, Integer, Numeric, String, Date,
-    Text, BigInteger, DateTime, CheckConstraint,
-    UniqueConstraint, Index, Computed
+    Text, DateTime, CheckConstraint,
+    UniqueConstraint, Index
 )
 from sqlalchemy.sql import func
 from .database import Base
@@ -44,51 +44,6 @@ class ExchangeRate(Base):
     date       = Column(Date, nullable=False)
     currency   = Column(String(10), nullable=False)
     rate       = Column(Numeric(12, 4), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-
-class StockPrice(Base):
-    __tablename__ = "stock_prices"
-    __table_args__ = (
-        UniqueConstraint("date", "symbol", name="uq_stock_date_symbol"),
-        Index("idx_stock_prices_symbol", "symbol"),
-        Index("idx_stock_prices_date", "date"),
-    )
-
-    id         = Column(Integer, primary_key=True)
-    date       = Column(Date, nullable=False)
-    symbol     = Column(String(20), nullable=False)
-    open       = Column(Numeric(12, 2))
-    high       = Column(Numeric(12, 2))
-    low        = Column(Numeric(12, 2))
-    close      = Column(Numeric(12, 2), nullable=False)
-    volume     = Column(BigInteger, default=0)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-
-class SectorIndex(Base):
-    __tablename__ = "sector_indices"
-    __table_args__ = (
-        UniqueConstraint("date", "sector", name="uq_sector_date"),
-        Index("idx_sector_indices_sector", "sector"),
-    )
-
-    id          = Column(Integer, primary_key=True)
-    date        = Column(Date, nullable=False)
-    sector      = Column(String(60), nullable=False)
-    index_value = Column(Numeric(12, 2), nullable=False)
-    change_pct  = Column(Numeric(6, 2))
-    created_at  = Column(DateTime(timezone=True), server_default=func.now())
-
-
-class ForeignFlow(Base):
-    __tablename__ = "foreign_flow"
-
-    id         = Column(Integer, primary_key=True)
-    date       = Column(Date, nullable=False, unique=True)
-    buy_value  = Column(Numeric(15, 2), nullable=False, default=0)
-    sell_value = Column(Numeric(15, 2), nullable=False, default=0)
-    net_flow   = Column(Numeric(15, 2), Computed("buy_value - sell_value", persisted=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

@@ -68,3 +68,29 @@ class SummaryOut(BaseModel):
     latest_rate: Optional[CbslRateOut] = None
     latest_inflation: Optional[InflationDataOut] = None
     latest_exchange_rates: list[ExchangeRateOut] = []
+
+
+class RateInflationPoint(BaseModel):
+    month: str
+    rate: float
+    inflation: float
+
+
+class RateInflationCorrelationOut(BaseModel):
+    correlation: Optional[float] = None
+    sample_size: int
+    lag_months: int
+    points: list[RateInflationPoint] = []
+
+
+class FxInflationPoint(BaseModel):
+    month: str
+    fx_change_pct: float
+    inflation: float
+
+
+class FxInflationCorrelationOut(BaseModel):
+    correlation: Optional[float] = None
+    sample_size: int
+    window_days: int
+    points: list[FxInflationPoint] = []

@@ -16,7 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from Backend.database import get_db
-from Backend.routers import rates, inflation, exchange, events, summary
+from Backend.routers import rates, inflation, exchange, events, summary, correlation
 
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 
@@ -49,3 +49,4 @@ app.include_router(inflation.router, prefix="/api")
 app.include_router(exchange.router, prefix="/api")
 app.include_router(events.router, prefix="/api")
 app.include_router(summary.router, prefix="/api")
+app.include_router(correlation.router, prefix="/api")

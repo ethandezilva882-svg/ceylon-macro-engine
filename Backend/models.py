@@ -63,3 +63,16 @@ class MacroEvent(Base):
     impact      = Column(String(10))
     source      = Column(String(200))
     created_at  = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class User(Base):
+    __tablename__ = "users"
+    __table_args__ = (
+        Index("idx_users_email", "email"),
+    )
+
+    id              = Column(Integer, primary_key=True)
+    email           = Column(String(255), nullable=False, unique=True)
+    hashed_password = Column(String(255), nullable=False)
+    created_at      = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at      = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

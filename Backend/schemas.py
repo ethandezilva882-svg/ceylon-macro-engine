@@ -10,7 +10,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CbslRateOut(BaseModel):
@@ -94,3 +94,27 @@ class FxInflationCorrelationOut(BaseModel):
     sample_size: int
     window_days: int
     points: list[FxInflationPoint] = []
+
+
+class UserCreate(BaseModel):
+    email: str
+    password: str = Field(min_length=8)
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    created_at: datetime
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut

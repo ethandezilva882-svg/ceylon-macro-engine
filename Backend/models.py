@@ -1,7 +1,7 @@
 from sqlalchemy import (
     Column, Integer, Numeric, String, Date,
     Text, DateTime, CheckConstraint,
-    UniqueConstraint, Index
+    UniqueConstraint, Index, ForeignKey
 )
 from sqlalchemy.sql import func
 from .database import Base
@@ -76,3 +76,19 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     created_at      = Column(DateTime(timezone=True), server_default=func.now())
     updated_at      = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class Basket(Base):
+    __tablename__ = "baskets"
+
+    id                 = Column(Integer, primary_key=True)
+    user_id            = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    food_weight        = Column(Numeric(5, 2), nullable=False, default=40.00)
+    transport_weight   = Column(Numeric(5, 2), nullable=False, default=15.00)
+    housing_weight     = Column(Numeric(5, 2), nullable=False, default=20.00)
+    healthcare_weight  = Column(Numeric(5, 2), nullable=False, default=8.00)
+    education_weight   = Column(Numeric(5, 2), nullable=False, default=7.00)
+    clothing_weight    = Column(Numeric(5, 2), nullable=False, default=5.00)
+    other_weight       = Column(Numeric(5, 2), nullable=False, default=5.00)
+    created_at         = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at         = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

@@ -1,14 +1,16 @@
 """
 Backend/main.py
 
-FastAPI application entrypoint. App instance, CORS, health check, and
-router wiring for public endpoints (t2-3): rates, inflation, exchange,
-events, summary.
+FastAPI application entrypoint. App instance, CORS, health check,
+router wiring, and scheduler lifecycle (t2-7). The AsyncIOScheduler
+starts on app startup and shuts down cleanly on app shutdown via the
+lifespan context manager.
 
 Run with: uvicorn Backend.main:app --reload (from project root, venv active)
 """
 
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,12 +19,22 @@ from sqlalchemy.orm import Session
 
 from Backend.database import get_db
 from Backend.routers import rates, inflation, exchange, events, summary, correlation, auth, basket
+from Backend.scheduler import start_scheduler, shutdown_scheduler
 
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler()
+    yield
+    shutdown_scheduler()
+
 
 app = FastAPI(
     title="Ceylon Cost of Living Engine API",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

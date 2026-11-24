@@ -1,35 +1,60 @@
-# ceylon-macro-engine
-A full stack web app correlating Sri Lankan macro indicators (CBSL rates, inflation, LKR) with CSE market performance
-## What it does
-- Tracks CBSL policy rates (SDFR, SLFR, OPR), inflation (NCPI/CCPI), and LKR/USD
-- Scrapes and stores CSE stock prices, sector indices, and foreign investor flow
-- Surfaces correlations like "what happens to banking stocks 30 days after a CBSL rate cut"
+Ceylon Cost of Living Engine
 
-## Tech Stack
-- **Backend:** Python, FastAPI, Uvicorn
-- **Database:** PostgreSQL 18, SQLAlchemy, Alembic
-- **Scraping:** Playwright, BeautifulSoup4, Requests
-- **Data:** Pandas, NumPy
-- **Scheduling:** APScheduler
-- **Frontend:** React, Vite, Recharts, D3
+A full-stack web app that tracks how the cost of living in Sri Lanka has changed over time, using only Central Bank of Sri Lanka (CBSL) published data. Users will be able to build a personal spending basket and compare their own inflation experience against the official headline figure.
 
-## Project Structure
+What it does
+Tracks CBSL policy rates (SDFR, SLFR), inflation (CCPI/NCPI), and LKR exchange rates across 14 currencies
+Automatically ingests and stores CBSL data with idempotent scrapers (re-runs never create duplicates)
+Detects macro events such as rate hikes, rate cuts, inflation spikes, and sharp LKR depreciation
+Analyses relationships like "how does inflation move 6 to 12 months after a rate hike" and how LKR depreciation passes through to imported inflation
+Personal basket feature: set your own spending weights and see your personal inflation rate vs official CPI
+Data sources
+
+All data comes from CBSL or Sri Lanka government publications. No proprietary or third-party financial data.
+
+Data	Source	Format
+Policy rates (SDFR/SLFR)	CBSL	Excel
+CPI / inflation (CCPI, NCPI)	CBSL	Excel
+Exchange rates (14 currencies)	CBSL	HTML table
+Tech stack
+Backend: Python, FastAPI, Uvicorn
+Database: PostgreSQL, SQLAlchemy, Alembic
+Scraping: Requests, BeautifulSoup4, openpyxl
+Data: Pandas, NumPy
+Scheduling: APScheduler
+Auth: JWT (python-jose), bcrypt (passlib)
+Frontend: React, Vite, Recharts, D3
+Project structure
 ceylon-macro-engine/
 ├── Backend/        # FastAPI app, models, database config
 ├── Frontend/       # React + Vite app
-├── Scrapers/       # Data scrapers for CBSL, CSE, LKR/USD
+├── Scrapers/       # CBSL rates, CPI, and exchange rate scrapers
 ├── Data/           # Raw data files
 ├── Docs/           # Project documentation
 └── alembic/        # Database migrations
+Setup
+Clone the repo
+Create and activate a virtual environment: .\Backend\venv\Scripts\activate
+Install dependencies: pip install -r requirements.txt
+Set up PostgreSQL and create a .env file (see below)
+Run migrations: alembic upgrade head
+Start the backend: uvicorn Backend.main:app --reload
+Start the frontend: cd Frontend && npm run dev
+Environment variables
+DATABASE_URL=postgresql://user:password@localhost:5432/your_db
+SECRET_KEY=your_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+Status
 
-## Setup
-1. Clone the repo
-2. Create and activate venv: `.\Backend\venv\Scripts\activate`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Set up PostgreSQL and create `.env` with your `DATABASE_URL`
-5. Run migrations: `alembic upgrade head`
-6. Start backend: `uvicorn Backend.main:app --reload`
-7. Start frontend: `cd Frontend && npm run dev`
+In active development.
 
-## Status
-Currently in active development — Phase 1 (Data Layer) in progress.
+[x] Data layer: CBSL rate, CPI, and exchange rate scrapers
+[ ] Database cleanup and new tables (users, baskets, macro events)
+[ ] REST API and JWT authentication
+[ ] Frontend dashboard and correlation charts
+[ ] Personal basket feature
+[ ] Deployment
+Disclaimer
+
+For educational purposes only. Not financial advice.

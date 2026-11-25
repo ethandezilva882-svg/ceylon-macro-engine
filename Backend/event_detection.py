@@ -46,9 +46,9 @@ def detect_rate_events(rates_df: pd.DataFrame) -> list[dict]:
         events.append({
             "date": _d(df.loc[i, "date"]),
             "event_type": "RATE_HIKE" if hike else "RATE_CUT",
-            "title": f"CBSL {verb} SDFR by {abs(change_bps)} bps to {cur_rate:.2f}%",
+            "title": f"CBSL {verb} the policy rate by {abs(change_bps)} bps to {cur_rate:.2f}%",
             "description": (
-                f"CBSL {verb} the Standing Deposit Facility Rate from "
+                f"CBSL {verb} the policy rate from "
                 f"{prev_rate:.2f}% to {cur_rate:.2f}% ({abs(change_bps)} basis points)."
             ),
             "impact": "neutral",

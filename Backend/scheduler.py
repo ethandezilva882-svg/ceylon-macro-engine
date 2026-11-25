@@ -56,10 +56,22 @@ def run_scraper(module_name: str) -> None:
             logger.error(result.stderr.strip())
 
 
+def run_event_detection() -> None:
+    """Refresh macro_events from freshly scraped data. Never raises, so a
+    detection bug can't break the daily scrape job."""
+    try:
+        from Backend.event_detection import run_detection
+        inserted = run_detection()
+        logger.info(f"Event detection finished, {inserted} new events")
+    except Exception:
+        logger.exception("Event detection FAILED")
+
+
 def run_all_scrapers_sync() -> None:
     logger.info("=== Daily scraper run starting ===")
     for module in SCRAPER_MODULES:
         run_scraper(module)
+    run_event_detection()
     logger.info("=== Daily scraper run finished ===")
 
 
